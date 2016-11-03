@@ -101,7 +101,7 @@ See [`conf/uppmax.config`](conf/uppmax.config) for a list of the supported refer
   * `--genome GRCh37`
 * Mouse
   * `--genome GRCm38`
-_There are numerous others - check the config file for more._
+Check the config file for more supported reference genomes.
 
 ### `--outdir`
 The output directory where the results will be saved.
