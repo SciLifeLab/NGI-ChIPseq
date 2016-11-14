@@ -107,7 +107,7 @@ if( workflow.profile == 'standard' && !params.project ) exit 1, "No UPPMAX proje
  * Create a channel for input read files
  */
 Channel
-    .fromFilePairs( params.reads )
+    .fromPath( params.reads )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .into { raw_reads_fastqc; raw_reads_trimgalore }
 
@@ -133,7 +133,7 @@ Channel
  */
 process fastqc {
     tag "$name"
-    
+
     memory { 2.GB * task.attempt }
     time { 4.h * task.attempt }
     publishDir "${params.outdir}/fastqc", mode: 'copy'
@@ -600,7 +600,7 @@ process macs {
     if (params.genome == 'GRCh37'){ REF = 'hs' }
     else if (params.genome == 'GRCm38'){ REF = 'mm' }
     else { error "No reference / reference not supported available for MACS! >${params.genome}<" }
-    
+
     def ctrl = ctrl_sample_id == '' ? '' : "-c ${ctrl_sample_id}.dedup.sorted.bam"
     """
     macs2 callpeak \\
@@ -634,7 +634,7 @@ process multiqc {
     output:
     file '*multiqc_report.html'
     file '*multiqc_data'
-    
+
     script:
     """
     multiqc -f .
