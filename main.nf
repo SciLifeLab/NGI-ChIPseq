@@ -51,6 +51,7 @@ params.notrim = false
 params.saveReference = false
 params.saveTrimmed = false
 params.saveAlignedIntermediates = false
+params.blacklist = false
 params.broad = false
 params.outdir = './results'
 params.email = false
@@ -157,6 +158,7 @@ summary['Script dir']     = workflow.projectDir
 summary['Save Reference'] = params.saveReference
 summary['Save Trimmed']   = params.saveTrimmed
 summary['Save Intermeds'] = params.saveAlignedIntermediates
+summary['Filter blacklist'] = params.blacklist
 if(params.notrim)       summary['Trimming Step'] = 'Skipped'
 if( params.clip_r1 > 0) summary['Trim R1'] = params.clip_r1
 if( params.clip_r2 > 0) summary['Trim R2'] = params.clip_r2
@@ -287,13 +289,55 @@ process bwa {
  * STEP 3.2 - post-alignment processing
  */
 
+/* Optional filtering of blacklist regions. If no bed file of blacklist region given, 
+   this step is skipped. In that case we just change the name of the bam file (to 
+   ${bam.baseName}.filtered.bam), since the MACS process cannot handle different file names. */
+
+if(!params.blacklist){
+   process no_filter{
+          tag "${bam.baseName}"
+
+
+          input:
+          file bam from bwa_bam
+
+          output:
+          file '*.filtered.bam' into filtered_bam
+
+          script:
+          """
+          cp $bam ${bam.baseName}.filtered.bam
+          """
+    }
+} else {
+  process bedtools_intersect {
+    	  tag "${bam.baseName}"
+	  
+	  
+    	  input:
+    	  file bam from bwa_bam
+	  
+    	  output:
+    	  file '*.filtered.bam' into filtered_bam
+
+    	  script:
+    	  """
+    	  bedtools intersect -abam $bam -b ${params.blacklist} -v > ${bam.baseName}.filtered.bam
+    	  """
+    }
+}
+
+
+
 process samtools {
     tag "${bam.baseName}"
     publishDir path: { params.saveAlignedIntermediates ? "${params.outdir}/bwa" : params.outdir }, mode: 'copy',
                saveAs: {filename -> params.saveAlignedIntermediates ? filename : null }
 
+
+
     input:
-    file bam from bwa_bam
+    file bam from filtered_bam
 
     output:
     file '*.sorted.bam' into bam_picard
@@ -559,11 +603,11 @@ process macs {
     when: REF_macs
 
     script:
-    def ctrl = ctrl_sample_id == '' ? '' : "-c ${ctrl_sample_id}.dedup.sorted.bam"
+    def ctrl = ctrl_sample_id == '' ? '' : "-c ${ctrl_sample_id}.filtered.dedup.sorted.bam"
     broad = params.broad ? "--broad" : ''
     """
     macs2 callpeak \\
-        -t ${chip_sample_id}.dedup.sorted.bam \\
+        -t ${chip_sample_id}.filtered.dedup.sorted.bam \\
         $ctrl \\
         $broad \\
         -f BAM \\
