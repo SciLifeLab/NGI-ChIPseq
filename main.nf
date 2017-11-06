@@ -289,26 +289,10 @@ process bwa {
  * STEP 3.2 - post-alignment processing
  */
 
-/* Optional filtering of blacklist regions. If no bed file of blacklist region given, 
-   this step is skipped. In that case we just change the name of the bam file (to 
-   ${bam.baseName}.filtered.bam), since the MACS process cannot handle different file names. */
+/* Optional filtering of blacklist regions. */
 
 if(!params.blacklist){
-   process no_filter{
-          tag "${bam.baseName}"
-
-
-          input:
-          file bam from bwa_bam
-
-          output:
-          file '*.filtered.bam' into filtered_bam
-
-          script:
-          """
-          cp $bam ${bam.baseName}.filtered.bam
-          """
-    }
+	filtered_bam = bwa_bam
 } else {
   process bedtools_intersect {
     	  tag "${bam.baseName}"
@@ -345,10 +329,11 @@ process samtools {
     file '*.sorted.bed' into bed_total
 
     script:
+    prefix = bam[0].toString() - ~/(\.filtered)?.bam$/
     """
-    samtools sort $bam -o ${bam.baseName}.sorted.bam
-    samtools index ${bam.baseName}.sorted.bam
-    bedtools bamtobed -i ${bam.baseName}.sorted.bam | sort -k 1,1 -k 2,2n -k 3,3n -k 6,6 > ${bam.baseName}.sorted.bed
+    samtools sort $bam -o ${prefix}.sorted.bam
+    samtools index ${prefix}.sorted.bam
+    bedtools bamtobed -i ${prefix}.sorted.bam | sort -k 1,1 -k 2,2n -k 3,3n -k 6,6 > ${prefix}.sorted.bed
     """
 }
 
@@ -603,11 +588,11 @@ process macs {
     when: REF_macs
 
     script:
-    def ctrl = ctrl_sample_id == '' ? '' : "-c ${ctrl_sample_id}.filtered.dedup.sorted.bam"
+    def ctrl = ctrl_sample_id == '' ? '' : "-c ${ctrl_sample_id}.dedup.sorted.bam"
     broad = params.broad ? "--broad" : ''
     """
     macs2 callpeak \\
-        -t ${chip_sample_id}.filtered.dedup.sorted.bam \\
+        -t ${chip_sample_id}.dedup.sorted.bam \\
         $ctrl \\
         $broad \\
         -f BAM \\
