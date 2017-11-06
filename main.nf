@@ -51,6 +51,7 @@ params.notrim = false
 params.saveReference = false
 params.saveTrimmed = false
 params.saveAlignedIntermediates = false
+params.blacklist = false
 params.broad = false
 params.outdir = './results'
 params.email = false
@@ -157,6 +158,7 @@ summary['Script dir']     = workflow.projectDir
 summary['Save Reference'] = params.saveReference
 summary['Save Trimmed']   = params.saveTrimmed
 summary['Save Intermeds'] = params.saveAlignedIntermediates
+summary['Filter blacklist'] = params.blacklist
 if(params.notrim)       summary['Trimming Step'] = 'Skipped'
 if( params.clip_r1 > 0) summary['Trim R1'] = params.clip_r1
 if( params.clip_r2 > 0) summary['Trim R2'] = params.clip_r2
@@ -287,13 +289,39 @@ process bwa {
  * STEP 3.2 - post-alignment processing
  */
 
+/* Optional filtering of blacklist regions. */
+
+if(!params.blacklist){
+	filtered_bam = bwa_bam
+} else {
+  process bedtools_intersect {
+    	  tag "${bam.baseName}"
+	  
+	  
+    	  input:
+    	  file bam from bwa_bam
+	  
+    	  output:
+    	  file '*.filtered.bam' into filtered_bam
+
+    	  script:
+    	  """
+    	  bedtools intersect -abam $bam -b ${params.blacklist} -v > ${bam.baseName}.filtered.bam
+    	  """
+    }
+}
+
+
+
 process samtools {
     tag "${bam.baseName}"
     publishDir path: { params.saveAlignedIntermediates ? "${params.outdir}/bwa" : params.outdir }, mode: 'copy',
                saveAs: {filename -> params.saveAlignedIntermediates ? filename : null }
 
+
+
     input:
-    file bam from bwa_bam
+    file bam from filtered_bam
 
     output:
     file '*.sorted.bam' into bam_picard
@@ -301,10 +329,11 @@ process samtools {
     file '*.sorted.bed' into bed_total
 
     script:
+    prefix = bam[0].toString() - ~/(\.filtered)?.bam$/
     """
-    samtools sort $bam -o ${bam.baseName}.sorted.bam
-    samtools index ${bam.baseName}.sorted.bam
-    bedtools bamtobed -i ${bam.baseName}.sorted.bam | sort -k 1,1 -k 2,2n -k 3,3n -k 6,6 > ${bam.baseName}.sorted.bed
+    samtools sort $bam -o ${prefix}.sorted.bam
+    samtools index ${prefix}.sorted.bam
+    bedtools bamtobed -i ${prefix}.sorted.bam | sort -k 1,1 -k 2,2n -k 3,3n -k 6,6 > ${prefix}.sorted.bed
     """
 }
 
