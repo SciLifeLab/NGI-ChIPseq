@@ -12,6 +12,11 @@ vim: syntax=groovy
  @#### Authors
  Chuan Wang <chuan.wang@scilifelab.se>
  Phil Ewels <phil.ewels@scilifelab.se>
+  Modifications for BCCA <saparicio@bccrc.ca>
+ 
+ NOTE: CURRENTLY THERE ARE SOME NOT WELL DOCUMENTED ASSUMPTIONS ABOUT FILENAMING AND PATHS
+ WHICH CAN LEAD TO BREAKING THE BWA ALIGN STEP AMONG OTHERS FROM BAD PARAMETER PARSING
+ 
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
 Pipeline overview:
