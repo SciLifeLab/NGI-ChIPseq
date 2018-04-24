@@ -4,6 +4,22 @@
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.24.0-brightgreen.svg
 )](https://www.nextflow.io/)
 
+# This pipeline has moved
+
+This pipeline has been moved to the new `nf-core` GitHub organisation. You can now
+find it here:
+
+### https://github.com/nf-core/ChIPseq
+
+This repository will be archived to maintain the release version for future
+reproducability, to allow reruns.
+
+If you have any questions, please get in touch: support@ngisweden.se
+
+// Phil Ewels, 2018-04-24
+
+---
+
 ## Introduction
 NGI-ChIPseq is a bioinformatics best-practice analysis pipeline used for ChIP-seq (chromatin immunoprecipitation sequencing) data analysis at the [National Genomics Infastructure](https://ngisweden.scilifelab.se/) at [SciLifeLab Stockholm](https://www.scilifelab.se/platforms/ngi/), Sweden.
 
