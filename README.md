@@ -9,7 +9,7 @@
 This pipeline has been moved to the new [nf-core](http://nf-co.re/) project.
 You can now find it here:
 
-### https://github.com/nf-core/ChIPseq
+### https://github.com/nf-core/chipseq
 
 If you have any problems with the pipeline, please create an issue at the above repository instead.
 
